@@ -56,6 +56,11 @@ public class MemberController {
     CustomSecurityConfig cc;
 
 
+    @GetMapping("/test")
+    public String test() {
+        return "AWS SpringBoot Test";
+    }
+
     // 카카오 로그인
     @RequestMapping("/kakaoStart")
     public @ResponseBody String kakaoStart() {
