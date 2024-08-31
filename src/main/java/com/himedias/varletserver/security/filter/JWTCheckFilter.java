@@ -301,8 +301,11 @@ public class JWTCheckFilter extends OncePerRequestFilter {
 
         //dayschedule
         if (path.startsWith("/dayschedule/insertDayschedule"))
-            return true;
+            return true;    
         if (path.startsWith("/dayschedule/deleteDayschedule"))
+            return true;
+
+        if (path.startsWith("/member/test/"))
             return true;
 
         return false;
