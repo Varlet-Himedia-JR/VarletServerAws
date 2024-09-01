@@ -6,6 +6,7 @@ import com.himedias.varletserver.entity.Reviewpreview;
 import com.himedias.varletserver.entity.ReviewSummary;
 import com.himedias.varletserver.entity.Reviewimg;
 import com.himedias.varletserver.service.ReviewService;
+import com.himedias.varletserver.service.S3UploadService;
 import jakarta.servlet.ServletContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -34,28 +35,52 @@ public class ReviewController {
     @Autowired
     private ServletContext context;
 
+//    @PostMapping("/fileupload")
+//    public ResponseEntity<Map<String, Object>> fileupload(@RequestParam("image") MultipartFile[] files) {
+//        Map<String, Object> result = new HashMap<>();
+//        List<String> savedFilenames = new ArrayList<>();
+//        String path = context.getRealPath("/uploads");
+//
+//        Calendar today = Calendar.getInstance();
+//        long dt = today.getTimeInMillis();
+//
+//        for (MultipartFile file : files) {
+//            String filename = file.getOriginalFilename();
+//            if (filename == null) {
+//                continue; // Skip files without a name
+//            }
+//
+//            String fn1 = filename.substring(0, filename.indexOf("."));
+//            String fn2 = filename.substring(filename.indexOf("."));
+//            String uploadPath = path + "/" + fn1 + dt + fn2;
+//
+//            try {
+//                file.transferTo(new File(uploadPath));
+//                savedFilenames.add(fn1 + dt + fn2);
+//            } catch (IllegalStateException | IOException e) {
+//                e.printStackTrace();
+//                result.put("error", "File upload failed: " + e.getMessage());
+//                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(result);
+//            }
+//        }
+//
+//        result.put("savefilenames", savedFilenames);
+//        return ResponseEntity.ok(result);
+//    }
+
+    @Autowired
+    S3UploadService sus;
+
     @PostMapping("/fileupload")
     public ResponseEntity<Map<String, Object>> fileupload(@RequestParam("image") MultipartFile[] files) {
         Map<String, Object> result = new HashMap<>();
         List<String> savedFilenames = new ArrayList<>();
-        String path = context.getRealPath("/uploads");
-
-        Calendar today = Calendar.getInstance();
-        long dt = today.getTimeInMillis();
 
         for (MultipartFile file : files) {
-            String filename = file.getOriginalFilename();
-            if (filename == null) {
-                continue; // Skip files without a name
-            }
-
-            String fn1 = filename.substring(0, filename.indexOf("."));
-            String fn2 = filename.substring(filename.indexOf("."));
-            String uploadPath = path + "/" + fn1 + dt + fn2;
-
             try {
-                file.transferTo(new File(uploadPath));
-                savedFilenames.add(fn1 + dt + fn2);
+                // S3에 파일을 업로드하고, 반환된 파일 경로를 저장
+                String uploadFilePathName = sus.saveFile(file);
+                savedFilenames.add(uploadFilePathName);
             } catch (IllegalStateException | IOException e) {
                 e.printStackTrace();
                 result.put("error", "File upload failed: " + e.getMessage());
@@ -119,8 +144,6 @@ public class ReviewController {
     }
 
 
-
-
     @PostMapping("/updateReview/{rseq}")
     public ResponseEntity<Map<String, Object>> updateReview(
             @PathVariable int rseq,
@@ -180,7 +203,6 @@ public class ReviewController {
     }
 
 
-
     @GetMapping("/getReviewView/{rseq}")
     public ResponseEntity<Map<String, Object>> getReviewView(@PathVariable Integer rseq) {
         Map<String, Object> result = new HashMap<>();
@@ -215,7 +237,6 @@ public class ReviewController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(result);
         }
     }
-
 
 
     @DeleteMapping("/reviewDelete/{rseq}")
