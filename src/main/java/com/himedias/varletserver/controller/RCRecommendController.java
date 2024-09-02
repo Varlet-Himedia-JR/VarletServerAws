@@ -44,14 +44,15 @@ public class RCRecommendController {
      * 선택적으로 이미지 파일 경로도 받을 수 있습니다.
      */
     @PostMapping("/writeRecommend/{rnum}")
-    public HashMap<String, Object> writeRecommend(
+    public ResponseEntity<HashMap<String, Object>> writeRecommend(
             @PathVariable("rnum") int rnum,
             @RequestParam("userid") String userid,
             @RequestParam("content") String content,
             @RequestParam(value = "berth", required = false) String berth,
             @RequestParam(value = "tour", required = false) String tour,
             @RequestParam(value = "files", required = false) MultipartFile[] files,
-            @RequestParam Map<String, String> allParams) {
+            @RequestParam(value = "image_type", required = false) String[] imageType,
+            @RequestParam(value = "removedimages", required = false) String[] removedImages) {
 
         try {
             // 게시글 및 사용자 정보를 조회
@@ -67,18 +68,19 @@ public class RCRecommendController {
             rcrecommend.setTour(tour);
 
             // 답글을 저장하고 파일이 있을 경우 파일 경로도 함께 저장
-            Rcrecommend savedRcrecommend = rcs.saveRcrecommend(rcrecommend, files, (HashMap<String, String>) allParams, member);
+            Rcrecommend savedRcrecommend = rcs.saveRcrecommend(rcrecommend, files, imageType, member);
 
             // HashMap으로 응답 구성
             HashMap<String, Object> response = new HashMap<>();
             response.put("rcnum", savedRcrecommend.getRcnum());
-            return response;
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
 
         } catch (Exception e) {
-            e.printStackTrace();
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Server Error", e);
+            e.printStackTrace();  // Exception 출력
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }
+
 
 
 
@@ -102,7 +104,6 @@ public class RCRecommendController {
         paging.setTotalCount((int) recommendList.getTotalElements());
         paging.calPaging();
 
-        // 절대 경로 변환 제거
         result.put("recommend", recommendList.getContent());
         result.put("paging", paging);
         return result;
